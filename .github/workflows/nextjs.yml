@@ -32,7 +32,10 @@ jobs:
 
         robocopy $source $destination /MIR /XD node_modules .next .git
 
-        if ($LASTEXITCODE -gt 7) {
+        if ($LASTEXITCODE -le 7) {
+          exit 0
+        }
+        else {
           exit $LASTEXITCODE
         }
 
