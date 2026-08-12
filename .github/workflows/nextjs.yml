@@ -12,11 +12,11 @@ jobs:
 
     steps:
 
-    - name: Checkout code
+    - name: Checkout Code
       uses: actions/checkout@v4
 
 
-    - name: Check Node Version
+    - name: Check Environment
       shell: powershell
       run: |
         node -v
@@ -24,20 +24,43 @@ jobs:
         pnpm -v
 
 
-    - name: Install dependencies
+    - name: Deploy Code to IIS Folder
       shell: powershell
+      run: |
+        $source = "$env:GITHUB_WORKSPACE"
+        $destination = "C:\inetpub\wwwroot\Node\reactjs-projects-main"
+
+        robocopy $source $destination /MIR /XD node_modules .next .git
+
+        if ($LASTEXITCODE -gt 7) {
+          exit $LASTEXITCODE
+        }
+
+
+    - name: Install Dependencies
+      shell: powershell
+      working-directory: C:\inetpub\wwwroot\Node\reactjs-projects-main
       run: |
         pnpm install
 
 
     - name: Build Next.js Application
       shell: powershell
+      working-directory: C:\inetpub\wwwroot\Node\reactjs-projects-main
       run: |
         pnpm build
 
 
     - name: Restart PM2 Application
       shell: powershell
+      working-directory: C:\inetpub\wwwroot\Node\reactjs-projects-main
       run: |
-        pm2 restart react-nextjs
+        pm2 reload react-nextjs
         pm2 save
+
+
+    - name: Restart IIS Application Pool
+      shell: powershell
+      run: |
+        Import-Module WebAdministration
+        Restart-WebAppPool -Name "NodeReact"
